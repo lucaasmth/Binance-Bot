@@ -60,7 +60,7 @@ client.on('message', message => {
 		.setFooter(" - ",message.author.avatarURL())
 		.setTimestamp()
 		.setColor("#F8D12F")
-		.setTitle("Need help "+message.member.nickname+" ?")
+		.setTitle("Need help "+message.author.name+" ?")
 		.addField("!register", "Displays the tutorial to register to the bot")
 		.addField("!logout", "Unregister from the bot, deleting all your information from it")
 		.addField("!balance", "Retrieve your balance information and displays it")
