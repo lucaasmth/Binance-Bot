@@ -65,21 +65,21 @@ client.on('message', message => {
 					APIKEY: users[id].apiKey,
 					APISECRET: users[id].secret
 				});
-				getBalance(binance, message)
+				getBalance(binance, message, client.users.cache.get(id).username)
 			}
 			else{
 				const binance = new Binance().options({
 					APIKEY: users[message.author.id].apiKey,
 					APISECRET: users[message.author.id].secret
 				});
-				getBalance(binance, message)
+				getBalance(binance, message, message.author.username)
 			}
 		}
 		
 	}
 });
 
-function getBalance(binance, message){
+function getBalance(binance, message, username){
 	binance.balance(async (err, balances) => {
 		if (err) {
 			message.channel.send("Une erreur est survenue, peut-être que vos clés sont invalides.");
@@ -89,7 +89,7 @@ function getBalance(binance, message){
 			let prices = await binance.prices();
 			let total = 0;
 			const responseEmbed = new Discord.MessageEmbed()
-				.setTitle(`${message.author.username}'s balance`)
+				.setTitle(`${username}'s balance`)
 			for (coin in balances) {
 				let price = undefined;
 				if (coin.startsWith("LD")) {
