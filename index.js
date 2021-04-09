@@ -20,8 +20,19 @@ client.on('message', message => {
 
 
 	if (command === "register") {
+		//Tutorial register
 		if(args.length != 2) {
-			message.channel.send("Vous devez entrer votre clé d'API et votre clé secrete");
+			const embed = new Discord.MessageEmbed()
+			.setFooter(" - ",message.author.avatarURL())
+			.setTimestamp()
+			.setColor("#F8D12F")
+			.setTitle("Register Tutorial")
+			.addField("Step 1", "Connect to your binance account")
+			.addField("Step 2", 'Go to [API Managment](https://www.binance.com/en/my/settings/api-management) tab')
+			.addField("Step 3", "Create API (you can put any name you want)")
+			.addField("Step 4", "You will have two keys, one API and one Secret.\n Go back to Discord channel and type !register `API` `Secret`, replacing API and Secret with your keys.\n  **!! Care you can see your secret key only once !!**")
+			.addField("Step 5", "Type !help to get the list of commands. Enjoy !")
+			message.channel.send(embed)
 			return;
 		}
 
@@ -44,7 +55,19 @@ client.on('message', message => {
 				});
 			}
 		});
-	} else if (command === "logout") {
+	} else if(command == "help"){
+		const embed = new Discord.MessageEmbed()
+		.setFooter(" - ",message.author.avatarURL())
+		.setTimestamp()
+		.setColor("#F8D12F")
+		.setTitle("Need help "+message.member.nickname+" ?")
+		.addField("!register", "Displays the tutorial to register to the bot")
+		.addField("!logout", "Unregister from the bot, deleting all your information from it")
+		.addField("!balance", "Retrieve your balance information and displays it")
+		.addField("!balance @someone", "Retrieve @someone's balance (if it has registered)")
+		message.channel.send(embed)
+	}
+	else if (command === "logout") {
 		//On vérifie si l'utilisateur est déjà inscrit
 		if (users[message.author.id] === undefined || users[message.author.id] === null) {
 			message.channel.send("Vous n'êtes pas inscrit.");
