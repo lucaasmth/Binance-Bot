@@ -58,7 +58,7 @@ client.on('message', message => {
 		});
 	} else {
 		if (command === "balance") {
-			if(args[0].startsWith("<@")){
+			if(args[0] && args[0].startsWith("<@")){
 				let id = args[0].slice("<@!".length, args[0].length-1)
 				console.log(id)
 				const binance = new Binance().options({
