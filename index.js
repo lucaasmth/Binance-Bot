@@ -12,7 +12,7 @@ client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on('message', message => {
+client.on('message', async message => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
 
 	const args = message.content.slice(prefix.length).trim().split(' ');
@@ -65,6 +65,7 @@ client.on('message', message => {
 		.addField("!logout", "Unregister from the bot, deleting all your information from it")
 		.addField("!balance", "Retrieve your balance information and displays it")
 		.addField("!balance @someone", "Retrieve @someone's balance (if it has registered)")
+		.addField("!futures", "Retriveve your futures information and displays it")
 		message.channel.send(embed)
 	}
 	else if (command === "logout") {
@@ -98,7 +99,26 @@ client.on('message', message => {
 				getBalance(binance, message, message.author.username)
 			}
 		}
-		
+		else if (command === "futures") {
+			try {
+				const binance = new Binance().options({
+					APIKEY: users[message.author.id].apiKey,
+					APISECRET: users[message.author.id].secret
+				});
+				const futures = await binance.futuresAccount();
+				const positions = futures.positions;
+				const responseEmbed = new Discord.MessageEmbed()
+					.setTitle(`${message.member.displayName}'s futures balance`)
+				for (future in positions) {
+					if (positions[future].initialMargin > 0) {
+						responseEmbed.addField(`${positions[future].symbol} (x${positions[future].leverage})`, positions[future].unrealizedProfit>0?"```diff\n+":"```diff\n" + positions[future].unrealizedProfit + '\n```');
+					}
+				}
+				message.channel.send(responseEmbed);
+			} catch (err) {
+				console.error(err);
+			}
+		}
 	}
 });
 
