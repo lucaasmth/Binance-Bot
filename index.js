@@ -83,7 +83,9 @@ client.on('message', async message => {
 	} else {
 		if (command === "balance") {
 			if(args[0] && args[0].startsWith("<@")){
-				let id = args[0].slice("<@!".length, args[0].length-1)
+				let id;
+				if (args[0].includes("!")) id = args[0].slice("<@!".length, args[0].length-1);
+				else id = args[0].slice("<@".length, args[0].length-1);
 				console.log(id)
 				const binance = new Binance().options({
 					APIKEY: users[id].apiKey,
@@ -96,7 +98,7 @@ client.on('message', async message => {
 					APIKEY: users[message.author.id].apiKey,
 					APISECRET: users[message.author.id].secret
 				});
-				getBalance(binance, message, message.author.username)
+				getBalance(binance, message, message.member.displayName)
 			}
 		}
 		else if (command === "futures") {
@@ -111,7 +113,7 @@ client.on('message', async message => {
 					.setTitle(`${message.member.displayName}'s futures balance`)
 				for (future in positions) {
 					if (positions[future].initialMargin > 0) {
-						responseEmbed.addField(`${positions[future].symbol} (x${positions[future].leverage})`, positions[future].unrealizedProfit>0?"```diff\n+":"```diff\n" + positions[future].unrealizedProfit + '\n```');
+						responseEmbed.addField(`${positions[future].symbol} (x${positions[future].leverage})`, (positions[future].unrealizedProfit>0?"```diff\n+":"```diff\n") + positions[future].unrealizedProfit + '\n```');
 					}
 				}
 				message.channel.send(responseEmbed);
