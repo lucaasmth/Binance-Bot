@@ -102,27 +102,47 @@ client.on('message', async message => {
 			}
 		}
 		else if (command === "futures") {
-			try {
-				const binance = new Binance().options({
-					APIKEY: users[message.author.id].apiKey,
-					APISECRET: users[message.author.id].secret
-				});
-				const futures = await binance.futuresAccount();
-				const positions = futures.positions;
-				const responseEmbed = new Discord.MessageEmbed()
-					.setTitle(`${message.member.displayName}'s futures balance`)
-				for (future in positions) {
-					if (positions[future].initialMargin > 0) {
-						responseEmbed.addField(`${positions[future].symbol} (x${positions[future].leverage})`, (positions[future].unrealizedProfit>0?"```diff\n+":"```diff\n") + positions[future].unrealizedProfit + '\n```');
-					}
+			if(args[0] && args[0].startsWith("<@")){
+				let id;
+				if (args[0].includes("!")) id = args[0].slice("<@!".length, args[0].length-1);
+				else id = args[0].slice("<@".length, args[0].length-1);
+				try{
+					const binance = new Binance().options({
+						APIKEY: users[id].apiKey,
+						APISECRET: users[id].secret
+					});
+					getFutureBalance(binance, message, client.users.cache.get(id).username)
+				} catch(err){
+					console.error(err);
 				}
-				message.channel.send(responseEmbed);
-			} catch (err) {
-				console.error(err);
+			}
+			else{
+				try {
+					const binance = new Binance().options({
+						APIKEY: users[message.author.id].apiKey,
+						APISECRET: users[message.author.id].secret
+					});
+					getFutureBalance(binance, message, message.member.displayName)
+				} catch (err) {
+					console.error(err);
+				}
 			}
 		}
 	}
 });
+
+async function getFutureBalance(binance, message, username){
+	const futures = await binance.futuresAccount();
+	const positions = futures.positions;
+	const responseEmbed = new Discord.MessageEmbed()
+		.setTitle(`${username}'s futures balance`)
+	for (future in positions) {
+		if (positions[future].initialMargin > 0) {
+			responseEmbed.addField(`${positions[future].symbol} (x${positions[future].leverage})`, (positions[future].unrealizedProfit>0?"```diff\n+":"```diff\n") + positions[future].unrealizedProfit + '\n```');
+		}
+	}
+	message.channel.send(responseEmbed);
+}
 
 function getBalance(binance, message, username){
 	binance.balance(async (err, balances) => {
