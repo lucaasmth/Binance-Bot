@@ -181,7 +181,7 @@ function getBalance(binance, message, username){
 			balances = orderJson(balances, "usdt");
 			balances["total"] = total
 			for(coin in balances){
-				if(coin){
+				if(balances[coin]["name"] != undefined){
 					responseEmbed.addField(balances[coin]["name"], `${balances[coin].available} ~= $${balances[coin].usdt}`)
 				}
 			}
