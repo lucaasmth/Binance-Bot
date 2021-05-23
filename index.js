@@ -144,41 +144,51 @@ async function getFutureBalance(binance, message, username){
 	message.channel.send(responseEmbed);
 }
 
-function getBalance(binance, message, username){
-	binance.balance(async (err, balances) => {
-		if (err) {
-			message.channel.send("Une erreur est survenue, peut-être que vos clés sont invalides.");
-		} else {
-			//On trie la balance + enleve les 0
-			balances = orderJson(balances);
-			let prices = await binance.prices();
-			let total = 0;
-			const responseEmbed = new Discord.MessageEmbed()
-				.setTitle(`${username}'s balance`)
-			for (coin in balances) {
-				let price = undefined;
-				if (coin.startsWith("LD")) {
-					price = prices[coin.slice("LD".length) + "USDT"];
-				} else {
-					price = prices[coin + "USDT"];
-				}
-				if (coin === "BETH") price = prices["ETHUSDT"];
-				if (coin === "USDT" || coin === "LDUSDT") price = 1;
-				if (price === undefined) {
-					price = prices[coin + "BTC"] * prices["BTCUSDT"];
-				}
-				if (price === undefined || isNaN(price)) {
-					responseEmbed.addField(coin, `${balances[coin].available}`);
-				} else {
-					const toUSDT = Math.round(price * balances[coin].available * 100)/100;
-					total += toUSDT;
-					responseEmbed.addField(coin, `${balances[coin].available} ~= $${toUSDT}`);
-				}
-			}
-			responseEmbed.addField("Total", `$${Math.round(total * 100) / 100}`);
-			message.channel.send(responseEmbed);
-		}
-	});
+function getBalance(binance, res, req){
+    binance.balance(async (err, balances) => {
+        if (err) {
+            res.send("Une erreur est survenue, peut-être que vos clés sont invalides.");
+        } else {
+            //On trie la balance + enleve les 0
+            balances = orderJson(balances);
+            let prices = await binance.prices();
+            let total = 0;
+            for (coin in balances) {
+                let price = undefined;
+                if (coin.startsWith("LD")) {
+                    price = prices[coin.slice("LD".length) + "USDT"];
+                } else {
+                    price = prices[coin + "USDT"];
+                }
+                if (coin === "BETH") price = prices["ETHUSDT"];
+                if (coin === "USDT" || coin === "LDUSDT") price = 1;
+                if (price === undefined) {
+                    price = prices[coin + "BTC"] * prices["BTCUSDT"];
+                }
+                if (price === undefined || isNaN(price)) {
+                    balances[coin]["usdt"] = ""
+                    // responseEmbed.addField(coin, `${balances[coin].available}`);
+                } else {
+                    const toUSDT = Math.round(price * balances[coin].available * 100)/100;
+                    balances[coin]["usdt"] = toUSDT
+                    total += toUSDT;
+                    // responseEmbed.addField(coin, `${balances[coin].available} ~= $${toUSDT}`);
+                }
+                balances[coin]["name"] = coin
+            }
+            balances = orderJson(balances, "udst");
+            balances["total"] = total
+            // responseEmbed.addField("Total", `$${Math.round(total * 100) / 100}`);
+            let url = req.url.split("/")[1]
+            let user = req.url.split("/")[2]
+            console.log(url)
+            res.render("balance.html.twig", {
+                balance: balances,
+                url: url,
+                user: user
+            });
+        }
+    });
 }
 
 const dailyLog = schedule.scheduleJob('* 00 23 * * *', async () => {
@@ -234,34 +244,58 @@ async function callBalanceAndSaveToJSON(binance, user){
 	});
 }
 
-function orderJson(json){
-	let max = -1;
-	let coinToAdd;
-	let valueToAdd;
-	let coinTrie = {}
-	let nbOfCoins = 0
+function orderJson(json, mode="available"){
+    let max = -1;
+    let coinToAdd;
+    let valueToAdd;
+    let coinTrie = {}
+    let nbOfCoins = 0
 
-	//On fait une première boucle pour savoir combien de coin y'aura dans le tableau à la fin
-	for(coin in json){
-		if(json[coin].available > 0){
-			nbOfCoins+=1
-		}
-	}
-
-	while(Object.keys(coinTrie).length != nbOfCoins){
-		for(coin in json){
-			if(json[coin].available > 0){
-				if(Number(json[coin].available) > Number(max) && !isInJson(coin, coinTrie)){
-					max = json[coin].available
-					coinToAdd = coin
-					valueToAdd = json[coin]
-				}
-			}
-		}
-		coinTrie[coinToAdd] = valueToAdd;
-		max = -1
-	}
-	return coinTrie
+    if(mode == "available"){
+        for(coin in json){
+            if(json[coin].available > 0){
+                nbOfCoins+=1
+            }
+        }
+    
+        while(Object.keys(coinTrie).length != nbOfCoins){
+            for(coin in json){
+                if(json[coin].available > 0){
+                    if(Number(json[coin].available) > Number(max) && !isInJson(coin, coinTrie)){
+                        max = json[coin].available
+                        coinToAdd = coin
+                        valueToAdd = json[coin]
+                    }
+                }
+            }
+            coinTrie[coinToAdd] = valueToAdd;
+            max = -1
+        }
+        return coinTrie
+    }
+    else{
+        //On fait une première boucle pour savoir combien de coin y'aura dans le tableau à la fin
+        for(coin in json){
+            if(json[coin].available > 0){
+                nbOfCoins+=1
+            }
+        }
+    
+        while(Object.keys(coinTrie).length != nbOfCoins){
+            for(coin in json){
+                if(json[coin].usdt > 0){
+                    if(Number(json[coin].usdt) > Number(max) && !isInJson(coin, coinTrie)){
+                        max = json[coin].usdt
+                        coinToAdd = coin
+                        valueToAdd = json[coin]
+                    }
+                }
+            }
+            coinTrie[coinToAdd] = valueToAdd;
+            max = -1
+        }
+        return coinTrie
+    }
 }
 
 function isInJson(coin, arrayOfCoin){
