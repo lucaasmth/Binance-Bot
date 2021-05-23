@@ -181,7 +181,9 @@ function getBalance(binance, message, username){
 			balances = orderJson(balances, "usdt");
 			balances["total"] = total
 			for(coin in balances){
-				responseEmbed.addField(balances[coin]["name"], `${balances[coin].available} ~= $${balances[coin].usdt}`)
+				if(coin){
+					responseEmbed.addField(balances[coin]["name"], `${balances[coin].available} ~= $${balances[coin].usdt}`)
+				}
 			}
 			responseEmbed.addField("Total", `$${Math.round(total * 100) / 100}`);
 			message.channel.send(responseEmbed);
