@@ -4,6 +4,7 @@ const Binance = require('node-binance-api');
 const client = new Discord.Client();
 const users = require('./users.json');
 const schedule = require('node-schedule');
+require('dotenv').config();
 
 const prefix = "!";
 
@@ -307,4 +308,5 @@ function isInJson(coin, arrayOfCoin){
 	return false
 }
 
-client.login('ODI5NjY5MDEwNzgyMDI3ODE3.YG7feg.RehG7HjSRc9vLJv6f5C0IMZzIPU');
+client.login(process.env.DISCORD_TOKEN);
+
